@@ -23,6 +23,17 @@ import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.common.config.ConfigResource.Type
 
 trait ConfigRepository {
+
+  /**
+   * Return a copy of the group configuration for the given group.  Future changes will not be reflected.
+   *
+   * @param groupName the name of the group for which configuration will be returned
+   * @return a copy of the broker configuration for the given broker
+   */
+  def groupConfig(groupName: String): Properties = {
+    config(new ConfigResource(Type.GROUP, groupName))
+  }
+
   /**
    * Return a copy of the topic configuration for the given topic.  Future changes will not be reflected.
    *

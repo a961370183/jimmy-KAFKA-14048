@@ -2937,6 +2937,8 @@ class KafkaApis(val requestChannel: RequestChannel,
           authHelper.authorize(request.context, DESCRIBE_CONFIGS, CLUSTER, CLUSTER_NAME)
         case ConfigResource.Type.TOPIC =>
           authHelper.authorize(request.context, DESCRIBE_CONFIGS, TOPIC, resource.resourceName)
+        case ConfigResource.Type.GROUP =>
+          authHelper.authorize(request.context, DESCRIBE_CONFIGS, GROUP, resource.resourceName)
         case rt => throw new InvalidRequestException(s"Unexpected resource type $rt for resource ${resource.resourceName}")
       }
     }
@@ -2945,6 +2947,7 @@ class KafkaApis(val requestChannel: RequestChannel,
       val error = ConfigResource.Type.forId(resource.resourceType) match {
         case ConfigResource.Type.BROKER | ConfigResource.Type.BROKER_LOGGER => Errors.CLUSTER_AUTHORIZATION_FAILED
         case ConfigResource.Type.TOPIC => Errors.TOPIC_AUTHORIZATION_FAILED
+        case ConfigResource.Type.GROUP => Errors.GROUP_AUTHORIZATION_FAILED
         case rt => throw new InvalidRequestException(s"Unexpected resource type $rt for resource ${resource.resourceName}")
       }
       new DescribeConfigsResponseData.DescribeConfigsResult().setErrorCode(error.code)

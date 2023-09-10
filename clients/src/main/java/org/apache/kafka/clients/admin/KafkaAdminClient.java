@@ -2422,6 +2422,7 @@ public class KafkaAdminClient extends AdminClient {
             case DEFAULT_CONFIG:
                 configSource = ConfigEntry.ConfigSource.DEFAULT_CONFIG;
                 break;
+            case
             default:
                 throw new IllegalArgumentException("Unexpected config source " + source);
         }

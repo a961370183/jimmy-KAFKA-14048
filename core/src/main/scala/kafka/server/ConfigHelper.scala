@@ -28,6 +28,7 @@ import org.apache.kafka.common.message.DescribeConfigsResponseData
 import org.apache.kafka.common.protocol.Errors
 import org.apache.kafka.common.requests.{ApiError, DescribeConfigsResponse}
 import org.apache.kafka.common.requests.DescribeConfigsResponse.ConfigSource
+import org.apache.kafka.coordinator.group.consumer.ConsumerGroupConfig
 import org.apache.kafka.server.config.ServerTopicConfigSynonyms
 import org.apache.kafka.storage.internals.log.LogConfig
 
@@ -62,6 +63,19 @@ class ConfigHelper(metadataCache: MetadataCache, config: KafkaConfig, configRepo
 
       try {
         val configResult = ConfigResource.Type.forId(resource.resourceType) match {
+          case ConfigResource.Type.GROUP =>
+            val group = resource.resourceName
+            if (resource.resourceName == null || resource.resourceName.isEmpty)
+              createResponseConfig(config.dynamicConfig.currentDynamicDefaultConfigs,
+                createBrokerConfigEntry(perBrokerConfig = false, includeSynonyms, includeDocumentation))
+            if (metadataCache.contains(topic)) {
+              val topicProps = configRepository.
+              val logConfig = LogConfig.fromProps(config.extractLogConfigMap, topicProps)
+              createResponseConfig(allConfigs(logConfig), createTopicConfigEntry(logConfig, topicProps, includeSynonyms, includeDocumentation))
+            } else {
+              new DescribeConfigsResponseData.DescribeConfigsResult().setErrorCode(Errors.UNKNOWN_TOPIC_OR_PARTITION.code)
+                .setConfigs(Collections.emptyList[DescribeConfigsResponseData.DescribeConfigsResourceResult])
+            }
           case ConfigResource.Type.TOPIC =>
             val topic = resource.resourceName
             Topic.validate(topic)
@@ -114,6 +128,30 @@ class ConfigHelper(metadataCache: MetadataCache, config: KafkaConfig, configRepo
             .setConfigs(Collections.emptyList[DescribeConfigsResponseData.DescribeConfigsResourceResult])
       }
     }
+  }
+
+  def createGroupConfigEntry(consumerGroupConfig: ConsumerGroupConfig, consumerProps: Properties, includeSynonyms: Boolean, includeDocumentation: Boolean)
+                            (name: String, value: Any): DescribeConfigsResponseData.DescribeConfigsResourceResult = {
+    val configEntryType = ConsumerGroupConfig.configType(name).asScala
+    val isSensitive = KafkaConfig.maybeSensitive(configEntryType)
+    val configDocumentation = if (includeDocumentation) consumerGroupConfig.documentationOf(name) else null
+    val valueAsString = if (isSensitive) null else ConfigDef.convertToString(value, configEntryType.orNull)
+    val allSynonyms = {
+      val list = Option(ServerTopicConfigSynonyms.TOPIC_CONFIG_SYNONYMS.get(name))
+        .map(s => configSynonyms(s, brokerSynonyms(s), isSensitive))
+        .getOrElse(List.empty)
+      if (!topicProps.containsKey(name))
+        list
+      else
+        new DescribeConfigsResponseData.DescribeConfigsSynonym().setName(name).setValue(valueAsString)
+          .setSource(ConfigSource.TOPIC_CONFIG.id) +: list
+    }
+    val source = if (allSynonyms.isEmpty) ConfigSource.DEFAULT_CONFIG.id else allSynonyms.head.source
+    val synonyms = if (!includeSynonyms) List.empty else allSynonyms
+    new DescribeConfigsResponseData.DescribeConfigsResourceResult()
+      .setName(name).setValue(valueAsString).setConfigSource(source)
+      .setIsSensitive(isSensitive).setReadOnly(false).setSynonyms(synonyms.asJava)
+      .setDocumentation(configDocumentation).setConfigType(dataType.id)
   }
 
   def createTopicConfigEntry(logConfig: LogConfig, topicProps: Properties, includeSynonyms: Boolean, includeDocumentation: Boolean)
