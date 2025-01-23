@@ -14,29 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.kafka.clients.admin;
 
-import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.annotation.InterfaceStability;
 
+import java.util.Map;
+
 /**
- * The result of {@link org.apache.kafka.clients.admin.Admin#addRaftVoter(int, org.apache.kafka.common.Uuid, java.util.Set, org.apache.kafka.clients.admin.AddRaftVoterOptions)}.
- *
+ * Options for the {@link Admin#alterShareGroupOffsets(String, Map, AlterShareGroupOffsetsOptions)} call.
+ * <p>
  * The API of this class is evolving, see {@link Admin} for details.
  */
-@InterfaceStability.Stable
-public class AddRaftVoterResult {
-    private final KafkaFuture<Void> result;
-
-    AddRaftVoterResult(KafkaFuture<Void> result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns a future that completes when the voter has been added.
-     */
-    public KafkaFuture<Void> all() {
-        return result;
-    }
+@InterfaceStability.Evolving
+public class AlterShareGroupOffsetsOptions extends AbstractOptions<AlterShareGroupOffsetsOptions> {
 
 }
