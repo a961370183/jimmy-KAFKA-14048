@@ -39,4 +39,4 @@ public class AddRaftVoterResult {
         return result;
     }
 
-}
+} 
