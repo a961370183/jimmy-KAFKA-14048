@@ -85,7 +85,7 @@ public class AlterShareGroupOffsetsRequest extends AbstractRequest {
     }
 
     @Override
-    public ApiMessage data() {
+    public AlterShareGroupOffsetsRequestData data() {
         return data;
     }
 }

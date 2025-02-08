@@ -34,6 +34,8 @@ import org.apache.kafka.common.message.AlterPartitionRequestDataJsonConverter;
 import org.apache.kafka.common.message.AlterPartitionResponseDataJsonConverter;
 import org.apache.kafka.common.message.AlterReplicaLogDirsRequestDataJsonConverter;
 import org.apache.kafka.common.message.AlterReplicaLogDirsResponseDataJsonConverter;
+import org.apache.kafka.common.message.AlterShareGroupOffsetsRequestDataJsonConverter;
+import org.apache.kafka.common.message.AlterShareGroupOffsetsResponseDataJsonConverter;
 import org.apache.kafka.common.message.AlterUserScramCredentialsRequestDataJsonConverter;
 import org.apache.kafka.common.message.AlterUserScramCredentialsResponseDataJsonConverter;
 import org.apache.kafka.common.message.ApiVersionsRequestDataJsonConverter;
@@ -212,6 +214,8 @@ import org.apache.kafka.common.requests.AlterPartitionRequest;
 import org.apache.kafka.common.requests.AlterPartitionResponse;
 import org.apache.kafka.common.requests.AlterReplicaLogDirsRequest;
 import org.apache.kafka.common.requests.AlterReplicaLogDirsResponse;
+import org.apache.kafka.common.requests.AlterShareGroupOffsetsRequest;
+import org.apache.kafka.common.requests.AlterShareGroupOffsetsResponse;
 import org.apache.kafka.common.requests.AlterUserScramCredentialsRequest;
 import org.apache.kafka.common.requests.AlterUserScramCredentialsResponse;
 import org.apache.kafka.common.requests.ApiVersionsRequest;
@@ -559,6 +563,8 @@ public class RequestConvertToJson {
                 return WriteShareGroupStateRequestDataJsonConverter.write(((WriteShareGroupStateRequest) request).data(), request.version());
             case WRITE_TXN_MARKERS:
                 return WriteTxnMarkersRequestDataJsonConverter.write(((WriteTxnMarkersRequest) request).data(), request.version());
+            case ALTER_SHARE_GROUP_OFFSETS:
+                return AlterShareGroupOffsetsRequestDataJsonConverter.write(((AlterShareGroupOffsetsRequest) request).data(), request.version());
             default:
                 throw new IllegalStateException("ApiKey " + request.apiKey() + " is not currently handled in `request`, the " +
                     "code should be updated to do so.");
@@ -741,6 +747,8 @@ public class RequestConvertToJson {
                 return WriteShareGroupStateResponseDataJsonConverter.write(((WriteShareGroupStateResponse) response).data(), version);
             case WRITE_TXN_MARKERS:
                 return WriteTxnMarkersResponseDataJsonConverter.write(((WriteTxnMarkersResponse) response).data(), version);
+            case ALTER_SHARE_GROUP_OFFSETS:
+                return AlterShareGroupOffsetsResponseDataJsonConverter.write(((AlterShareGroupOffsetsResponse) response).data(), version);
             default:
                 throw new IllegalStateException("ApiKey " + response.apiKey() + " is not currently handled in `response`, the " +
                     "code should be updated to do so.");
