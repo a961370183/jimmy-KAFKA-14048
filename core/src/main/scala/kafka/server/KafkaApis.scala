@@ -3272,8 +3272,6 @@ class KafkaApis(val requestChannel: RequestChannel,
 
   def handleAlterShareGroupOffsetsRequest(request: RequestChannel.Request): Unit = {
     val alterShareGroupOffsetsRequest = request.body[AlterShareGroupOffsetsRequest]
-    requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
-    CompletableFuture.completedFuture[Unit](())
   }
 
   // Visible for Testing
