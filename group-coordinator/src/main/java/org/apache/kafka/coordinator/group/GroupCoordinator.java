@@ -17,34 +17,7 @@
 package org.apache.kafka.coordinator.group;
 
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.message.ConsumerGroupDescribeResponseData;
-import org.apache.kafka.common.message.ConsumerGroupHeartbeatRequestData;
-import org.apache.kafka.common.message.ConsumerGroupHeartbeatResponseData;
-import org.apache.kafka.common.message.DeleteGroupsResponseData;
-import org.apache.kafka.common.message.DescribeGroupsResponseData;
-import org.apache.kafka.common.message.DescribeShareGroupOffsetsRequestData;
-import org.apache.kafka.common.message.DescribeShareGroupOffsetsResponseData;
-import org.apache.kafka.common.message.HeartbeatRequestData;
-import org.apache.kafka.common.message.HeartbeatResponseData;
-import org.apache.kafka.common.message.JoinGroupRequestData;
-import org.apache.kafka.common.message.JoinGroupResponseData;
-import org.apache.kafka.common.message.LeaveGroupRequestData;
-import org.apache.kafka.common.message.LeaveGroupResponseData;
-import org.apache.kafka.common.message.ListGroupsRequestData;
-import org.apache.kafka.common.message.ListGroupsResponseData;
-import org.apache.kafka.common.message.OffsetCommitRequestData;
-import org.apache.kafka.common.message.OffsetCommitResponseData;
-import org.apache.kafka.common.message.OffsetDeleteRequestData;
-import org.apache.kafka.common.message.OffsetDeleteResponseData;
-import org.apache.kafka.common.message.OffsetFetchRequestData;
-import org.apache.kafka.common.message.OffsetFetchResponseData;
-import org.apache.kafka.common.message.ShareGroupDescribeResponseData;
-import org.apache.kafka.common.message.ShareGroupHeartbeatRequestData;
-import org.apache.kafka.common.message.ShareGroupHeartbeatResponseData;
-import org.apache.kafka.common.message.SyncGroupRequestData;
-import org.apache.kafka.common.message.SyncGroupResponseData;
-import org.apache.kafka.common.message.TxnOffsetCommitRequestData;
-import org.apache.kafka.common.message.TxnOffsetCommitResponseData;
+import org.apache.kafka.common.message.*;
 import org.apache.kafka.common.requests.RequestContext;
 import org.apache.kafka.common.requests.TransactionResult;
 import org.apache.kafka.common.utils.BufferSupplier;
@@ -210,6 +183,11 @@ public interface GroupCoordinator {
     CompletableFuture<List<ShareGroupDescribeResponseData.DescribedGroup>> shareGroupDescribe(
         RequestContext context,
         List<String> groupIds
+    );
+
+    CompletableFuture<AlterShareGroupOffsetsResponseData.AlterShareGroupOffsetsResponseTopic> alterShareGroupOffsets(
+        RequestContext context,
+        AlterShareGroupOffsetsRequestData.AlterShareGroupOffsetsRequestTopic topic
     );
 
     /**

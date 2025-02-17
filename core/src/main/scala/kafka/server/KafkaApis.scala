@@ -3272,6 +3272,37 @@ class KafkaApis(val requestChannel: RequestChannel,
 
   def handleAlterShareGroupOffsetsRequest(request: RequestChannel.Request): Unit = {
     val alterShareGroupOffsetsRequest = request.body[AlterShareGroupOffsetsRequest]
+    val groupId = alterShareGroupOffsetsRequest.data.groupId
+    if (!isShareGroupProtocolEnabled) {
+      requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
+    } else if (!authHelper.authorize(request.context, WRITE, GROUP, groupId)) {
+      requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.GROUP_AUTHORIZATION_FAILED.exception))
+    } else {
+      val authorizedTopics = authHelper.filterByAuthorized(
+        request.context,
+        READ,
+        TOPIC,
+        alterShareGroupOffsetsRequest.data.topics.asScala
+      )(_.name)
+      val responseBuilder = new AlterShareGroupOffsetsResponseData()
+      alterShareGroupOffsetsRequest.data.topics().forEach(topic => {
+        if (!authorizedTopics.contains(topic.topicName())) {
+          // error response for unauthorized topic
+          topic.partitions().forEach(partition => {
+            responseBuilder.add(new AlterShareGroupOffsetsResponseData.AlterShareGroupOffsetsResponsePartition()
+              .setPartitionIndex(partition.partitionIndex())
+              .setErrorCode(Errors.TOPIC_AUTHORIZATION_FAILED.code))
+          })
+        } else if (!metadataCache.contains(topic.topicName())) {
+
+        } else {
+
+          groupCoordinator.alterShareGroupOffsets(request.context, topic)
+        }
+      })
+      requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
+    }
+    CompletableFuture.completedFuture[Unit](())
   }
 
   // Visible for Testing
