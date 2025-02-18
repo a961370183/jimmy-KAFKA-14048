@@ -3273,34 +3273,48 @@ class KafkaApis(val requestChannel: RequestChannel,
   def handleAlterShareGroupOffsetsRequest(request: RequestChannel.Request): Unit = {
     val alterShareGroupOffsetsRequest = request.body[AlterShareGroupOffsetsRequest]
     val groupId = alterShareGroupOffsetsRequest.data.groupId
+
     if (!isShareGroupProtocolEnabled) {
       requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
     } else if (!authHelper.authorize(request.context, READ, GROUP, groupId)) {
       requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.GROUP_AUTHORIZATION_FAILED.exception))
     } else {
-      val authorizedTopics = authHelper.filterByAuthorized(
-        request.context,
-        READ,
-        TOPIC,
-        alterShareGroupOffsetsRequest.data.topics.asScala
-      )(_.name)
-      val responseBuilder = new AlterShareGroupOffsetsResponseData()
-      alterShareGroupOffsetsRequest.data.topics().forEach(topic => {
-        if (!authorizedTopics.contains(topic.topicName())) {
-          // error response for unauthorized topic
-          topic.partitions().forEach(partition => {
-            responseBuilder.add(new AlterShareGroupOffsetsResponseData.AlterShareGroupOffsetsResponsePartition()
-              .setPartitionIndex(partition.partitionIndex())
-              .setErrorCode(Errors.TOPIC_AUTHORIZATION_FAILED.code))
-          })
-        } else if (!metadataCache.contains(topic.topicName())) {
+      val responseBuilder = new AlterShareGroupOffsetsResponse.Builder()
+      val authorizedTopicPartitions = new AlterShareGroupOffsetsRequestData.AlterShareGroupOffsetsRequestTopicCollection()
 
-        } else {
-
-          groupCoordinator.alterShareGroupOffsets(request.context, topic)
+      alterShareGroupOffsetsRequest.data.topics.forEach(topic => {
+        val invalidTopicError = checkValidTopic(topic.topicName())
+        val topicError = invalidTopicError.orElse {
+          if (!authHelper.authorize(request.context, READ, TOPIC, topic.topicName())) {
+            Some(new ApiError(Errors.TOPIC_AUTHORIZATION_FAILED))
+          } else if (!metadataCache.contains(topic.topicName()))
+            Some(new ApiError(Errors.UNKNOWN_TOPIC_OR_PARTITION))
+          else {
+            None
+          }
+        }
+        topicError match {
+          case Some(error) =>
+            topic.partitions().forEach(partition => responseBuilder.addPartition(topic.topicName(), partition.partitionIndex(), error.error))
+          case None =>
+            authorizedTopicPartitions.add(topic)
         }
       })
-      requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
+
+      AlterShareGroupOffsetsRequestData data = new AlterShareGroupOffsetsRequestData()
+        .setGroupId(groupId)
+        .setTopics(authorizedTopicPartitions)
+      groupCoordinator.alterShareGroupOffsets(
+        request.context,
+        groupId,
+        data
+      ).handle[Unit] { (response, exception) =>
+        if (exception != null) {
+          requestHelper.sendMaybeThrottle(request, alterShareGroupOffsetsRequest.getErrorResponse(exception))
+        } else {
+          requestHelper.sendMaybeThrottle(request, responseBuilder.merge(response).build())
+        }
+      }
     }
     CompletableFuture.completedFuture[Unit](())
   }

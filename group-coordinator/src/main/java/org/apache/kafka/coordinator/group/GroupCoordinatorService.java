@@ -736,8 +736,9 @@ public class GroupCoordinatorService implements GroupCoordinator {
     }
 
     @Override
-    public CompletableFuture<AlterShareGroupOffsetsResponseData.AlterShareGroupOffsetsResponseTopic> alterShareGroupOffsets(RequestContext context, AlterShareGroupOffsetsRequestData.AlterShareGroupOffsetsRequestTopic topic) {
-        return null;
+    public CompletableFuture<AlterShareGroupOffsetsResponseData.AlterShareGroupOffsetsResponseTopic> alterShareGroupOffsets(RequestContext context, String groupId, AlterShareGroupOffsetsRequestData requestData) {
+        throwIfNotActive();
+        throw new IllegalStateException("AlterShareGroupOffsets is not implemented yet.");
     }
 
     /**

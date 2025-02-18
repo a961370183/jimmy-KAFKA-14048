@@ -214,9 +214,19 @@ public interface GroupCoordinator {
         List<String> groupIds
     );
 
+    /**
+     * Alter Share Group Offsets.
+     *
+     * @param context           The coordinator request context.
+     * @param groupId           The group id.
+     * @param requestData       The AlterShareGroupOffsetsRequest data.
+     *
+     * @return A future yielding the results or an exception.
+     */
     CompletableFuture<AlterShareGroupOffsetsResponseData.AlterShareGroupOffsetsResponseTopic> alterShareGroupOffsets(
         RequestContext context,
-        AlterShareGroupOffsetsRequestData.AlterShareGroupOffsetsRequestTopic topic
+        String groupId,
+        AlterShareGroupOffsetsRequestData requestData
     );
 
     /**
